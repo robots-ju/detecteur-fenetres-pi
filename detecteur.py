@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import rpi.GPIO as gpio
+import RPi.GPIO as gpio
 from time import time
 from alerte_discord import send as discord_send
 from communication_serveur_web import send as web_send
@@ -22,7 +22,7 @@ while 1: #boucle infine
         state2=0.0
         discord_send("Fenetre 2 fermée")
         web_send(2,"close")
-    # alertes discord 
+    # alertes discord
     if state1+delay1<=time() and delay1!=0 and state1:
         if delay1==1800:
             discord_send("Fenetre 1 ouverte depuis 30 minutes")
