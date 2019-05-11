@@ -16,11 +16,11 @@ while 1: #boucle infine
     #fermeture des fenetres
     if state1 and gpio.input(PORT_FNT1):
         state1=0.0
-        discord_send("Fenetre 1 fermée")
+        discord_send("Fenetre 1 fermee")
         web_send(1,"close")
     if state2 and gpio.input(PORT_FNT2):
         state2=0.0
-        discord_send("Fenetre 2 fermée")
+        discord_send("Fenetre 2 fermee")
         web_send(2,"close")
     # alertes discord
     if state1+delay1<=time() and delay1!=0 and state1:
