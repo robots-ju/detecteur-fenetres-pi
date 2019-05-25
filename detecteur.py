@@ -3,54 +3,50 @@ import RPi.GPIO as gpio
 from time import time
 from alerte_discord import send as discord_send
 from communication_serveur_web import send as web_send
+class Fenetre:
+    def __init__(self,port,name):
+        self.port=port
+        self.name=name
+        gpio.setup(port,gpio.IN)
+        self.state=(not gpio.input(port))*time()
+        selfdelay=1800
+    def closing(self):
+        if self.state and gpio.input(self.port):
+            self.state=0.0
+            return True
+        return False
+    def alert(self):
+        if self.state+self.delay<=time() and self.delay and self.state:
+            if self.delay==1800:
+                self.delay=7200
+                return "30 minutes"
+            if self.delay==7200:
+                self.delay=28800
+                return "2 heures"
+            if self.delay==28800:
+                self.delay=0
+                return "8 heures"
+    def opening(self):
+        if not (self.state or gpio.input(self.port)):
+            self.state=time()
+            self.delay=1800
+            return True
+        return False
 gpio.setmode(gpio.BCM)
-PORT_FNT1=14
-PORT_FNT2=15
-gpio.setup(PORT_FNT1,gpio.IN)
-gpio.setup(PORT_FNT2,gpio.IN)
-state1=(not gpio.input(PORT_FNT1))*time()
-state2=(not gpio.input(PORT_FNT2))*time()
-delay1=1800
-delay2=1800
+fenetres=[]
+fenetres.append(Fenetre(14,"Fenetre 1"))
+fenetres.append(Fenetre(15,"Fenetre 2"))
 while 1: #boucle infine
-    #fermeture des fenetres
-    if state1 and gpio.input(PORT_FNT1):
-        state1=0.0
-        discord_send("Fenetre 1 fermee")
-        web_send(1,"close")
-    if state2 and gpio.input(PORT_FNT2):
-        state2=0.0
-        discord_send("Fenetre 2 fermee")
-        web_send(2,"close")
-    # alertes discord
-    if state1+delay1<=time() and delay1!=0 and state1:
-        if delay1==1800:
-            discord_send("Fenetre 1 ouverte depuis 30 minutes")
-            delay1=7200
-        elif delay1==7200:
-            discord_send("Fenetre 1 ouverte depuis 2 heures")
-            delay1=28800
-        elif delay1==28800:
-            discord_send("Fenetre 1 ouverte depuis 8 heures")
-            delay1=0
-    if state2+delay2<=time() and delay2!=0 and state2:
-        if delay2==1800:
-            discord_send("Fenetre 2 ouverte depuis 30 minutes")
-            delay2=7200
-        elif delay2==7200:
-            discord_send("Fenetre 2 ouverte depuis 2 heures")
-            delay2=28800
-        elif delay2==28800:
-            discord_send("Fenetre 2 ouverte depuis 8 heures")
-            delay2=0
-    #ouverture des fenetres
-    if not (state1 or gpio.input(PORT_FNT1)):
-        state1=time()
-        discord_send("Fenetre 1 ouverte")
-        web_send(1,"open")
-        delay1=1800
-    if not (state2 or gpio.input(PORT_FNT2)):
-        state2=time()
-        discord_send("Fenetre 2 ouverte")
-        web_send(2,"open")
-        delay2=1800
+    for fenetre in fenetres:
+        #fermeture des fenetres
+        if fenetre.closing():
+            discord_send(fenetre.name+" fermee")
+            web_send(fenetre.name,"closed")
+        # alertes discord
+        alert=fenetre.alert()
+        if alert!=None:
+            discord_send(fenetre.name+" ouverte depuis "+alert)
+        #ouverture des fenetres
+        if fenetre.opening():
+            discord_send(fenetre.name+" ouverte")
+            web_send(fenetre.name,"opened")
